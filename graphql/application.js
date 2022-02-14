@@ -36,7 +36,7 @@ const mutation = `
 const resolvers = {
     applicationsCount: async(parent, {search}, {user}) => {
         if(['manager', 'admin'].includes(user.role)) {
-            let searchedUsers
+            let searchedUsers;
             if(search)
                 searchedUsers = await User.find({
                     name: {'$regex': search, '$options': 'i'},
