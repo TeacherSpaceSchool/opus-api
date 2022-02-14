@@ -30,7 +30,6 @@
     "http-errors": "~1.6.2",
     "jade": "~1.11.0",
     "jimp": "^0.6.8",
-    "logger": "0.0.1",
     "mongoose": "^5.4.0",
     "mongoose-random": "^0.1.1",
     "mongoose-unique-validator": "^2.0.2",
