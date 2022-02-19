@@ -36,12 +36,20 @@ module.exports.sendNotification = async({type, who, whom, message, order, applic
             select: '_id name status'
         })
         .populate({
+            path: 'order',
+            select: '_id name status'
+        })
+        .populate({
             path: 'who',
             select: '_id name avatar reiting completedWorks login'
         })
         .populate({
-            path: 'whom',
-            select: '_id name login'
+            path: 'application',
+            select: '_id'
+        })
+        .populate({
+            path: 'chat',
+            select: '_id'
         })
         .lean()
     pubsub.publish(RELOAD_DATA, {
