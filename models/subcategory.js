@@ -11,7 +11,8 @@ const SubcategorySchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CategoryOpus'
     },
-    searchWords: String
+    searchWords: String,
+    quickTitles: String,
 }, {
     timestamps: true
 });

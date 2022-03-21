@@ -12,6 +12,7 @@ const type = `
     status: String
     category: Category
     searchWords: String
+    quickTitles: String
     autoApplication: Boolean
     priority: Int
   }
@@ -26,8 +27,8 @@ const query = `
 `;
 
 const mutation = `
-    addSubcategory(image: Upload!, autoApplication: Boolean!, name: String!, priority: Int, category: ID!, searchWords: String!): Subcategory
-    setSubcategory(_id: ID!, status: String, image: Upload, autoApplication: Boolean, priority: Int, name: String, category: ID, searchWords: String): String
+    addSubcategory(image: Upload!, quickTitles: String!, autoApplication: Boolean!, name: String!, priority: Int, category: ID!, searchWords: String!): Subcategory
+    setSubcategory(_id: ID!, status: String, quickTitles: String, image: Upload, autoApplication: Boolean, priority: Int, name: String, category: ID, searchWords: String): String
     deleteSubcategory(_id: ID!): String
 `;
 
@@ -125,7 +126,7 @@ const resolvers = {
 };
 
 const resolversMutation = {
-    addSubcategory: async(parent, {image, priority, name, category, searchWords, autoApplication}, {user}) => {
+    addSubcategory: async(parent, {quickTitles, image, priority, name, category, searchWords, autoApplication}, {user}) => {
         if(user.role==='admin'){
             let { stream, filename } = await image;
             filename = await saveImage(stream, filename)
@@ -136,13 +137,14 @@ const resolversMutation = {
                 category,
                 searchWords,
                 autoApplication,
-                priority
+                priority,
+                quickTitles
             });
             object = await Subcategory.create(object)
             return object
         }
     },
-    setSubcategory: async(parent, {_id, priority, status, image, name, category, searchWords, autoApplication}, {user}) => {
+    setSubcategory: async(parent, {quickTitles, _id, priority, status, image, name, category, searchWords, autoApplication}, {user}) => {
         if(user.role==='admin'){
             let object = await Subcategory.findOne({
                 _id
@@ -152,6 +154,7 @@ const resolversMutation = {
             if(status) object.status = status
             if(name) object.name = name
             if(searchWords) object.searchWords = searchWords
+            if(quickTitles) object.quickTitles = quickTitles
             if(autoApplication!=undefined) object.autoApplication = autoApplication
             if(image) {
                 let {stream, filename} = await image;
