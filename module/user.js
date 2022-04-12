@@ -4,18 +4,35 @@ const adminLogin = require('./const').adminLogin,
 
 
 module.exports.createAdmin = async () => {
-    await User.deleteMany({$or:[{login: adminLogin, role: {$ne: 'admin'}}, {role: 'admin', login: {$ne: adminLogin}}, {role: 'admin', city: undefined}]});
-    let findAdmin = await User.findOne({login: adminLogin}).lean();
+    await User.deleteMany({login: adminLogin, role: {$ne: 'admin'}});
+    let findAdmin = await User.findOne({login: adminLogin});
     if(!findAdmin){
         const _user = new User({
             login: adminLogin,
             role: 'admin',
             status: 'active',
             password: adminPass,
-            name: 'admin',
-            city: 'Бишкек'
+            name: 'OPUS',
+            city: 'Бишкек',
+            avatar: `${process.env.URL.trim()}/static/512x512.png`
         });
         await User.create(_user);
+    }
+    else if(
+        findAdmin.login!==adminLogin
+        ||
+        !findAdmin.city
+        ||
+        findAdmin.name!=='OPUS'
+        ||
+        findAdmin.avatar!==`${process.env.URL.trim()}/static/512x512.png`
+    )
+    {
+        findAdmin.login = adminLogin
+        findAdmin.city = 'Бишкек'
+        findAdmin.name = 'OPUS'
+        findAdmin.avatar = `${process.env.URL.trim()}/static/512x512.png`
+        await findAdmin.save()
     }
 }
 

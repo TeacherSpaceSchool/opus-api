@@ -26,13 +26,13 @@ const resolvers = {
 };
 
 const mutation = `
-    signupuser(name: String!, login: String!, password: String!, code: String): Status
+    signupuser(name: String!, login: String!, password: String!, code: String, isApple: Boolean): Status
     signinuser(login: String!, password: String!): Status
 `;
 
 const resolversMutation = {
-    signupuser: async(parent, { name, login, password, code }, {res, req}) => {
-        return await signupuserGQL({name, login, password, code }, res, req);
+    signupuser: async(parent, { name, login, password, code, isApple }, {res, req}) => {
+        return await signupuserGQL({name, login, password, code, isApple }, res, req);
     },
     signinuser: async(parent, { login, password }, {req, res}) => {
         return await signinuserGQL({ ...req, query: {login, password}}, res);

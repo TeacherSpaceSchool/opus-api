@@ -4,6 +4,7 @@ const Notification = require('../models/notification');
 const User = require('../models/user');
 const { saveImage, deleteFile, urlMain } = require('../module/const');
 const { sendNotification } = require('../module/notification');
+const { sendMessageByAdmin } = require('../module/chat');
 
 const type = `
   type Application {
@@ -161,6 +162,7 @@ const resolversMutation = {
                         }
                     ]
                     _user.specializations = [..._user.specializations]
+                    await sendMessageByAdmin({text: 'Привет1', user: _user._id, type: 'link'})
                     await _user.save()
                 }
             }
@@ -214,6 +216,7 @@ const resolversMutation = {
                             }
                         ]
                         _user.specializations = [..._user.specializations]
+                        await sendMessageByAdmin({text: 'Привет2', user: _user._id, type: 'text'})
                         await _user.save()
                     }
 

@@ -149,7 +149,7 @@ const resolvers = {
 
 const resolversMutation = {
     addEmployment: async(parent, {login, password, name, role, city, email}, {user}) => {
-        if(user.role==='admin'){
+        if(user.role==='admin'&&!(name.toLowerCase()).includes('opus')){
             let user = new User({
                 login: login.trim(),
                 status: 'active',
@@ -216,7 +216,7 @@ const resolversMutation = {
 
             if(password) object.password = password
             if(addresses) object.addresses = addresses
-            if(name) object.name = name
+            if(name&&!(name.toLowerCase()).includes('opus')) object.name = name
             if(city) {
                 object.city = city
                 if(object._id.toString()===user._id.toString())
