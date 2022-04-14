@@ -182,7 +182,7 @@ const resolversMutation = {
                     object.unread = true
                     object.comments = comments
                     await sendNotification({
-                        title: 'Заявка на сециалиста',
+                        title: 'Заявка на исполнителя',
                         type: 0,
                         whom: object.user,
                         message: 'Ваша заявка прокоментирована',
@@ -195,7 +195,7 @@ const resolversMutation = {
                     object.status = 'принят'
                     object.approvedUser = user._id
                     await sendNotification({
-                        title: 'Заявка на сециалиста',
+                        title: 'Заявка на исполнителя',
                         type: 0,
                         whom: object.user,
                         message: 'Ваша заявка принята',

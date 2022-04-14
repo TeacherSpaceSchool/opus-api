@@ -374,7 +374,7 @@ const resolversMutation = {
                     await sendNotification({
                         type: 6,
                         title: object.name,
-                        whom: object.executor,
+                        whom: canceledSpecialists[i],
                         who: object.customer,
                         message: 'Исполнитель отклонен',
                         url: `${process.env.URL.trim()}/order/${object._id}`,
@@ -423,7 +423,7 @@ const resolversMutation = {
                     title: object.name,
                     whom: object.customer,
                     who: user._id,
-                    message: message?message:'Готов выполнить заказ',
+                    message: message?message:'Готов(а) выполнить заказ',
                     order: object._id,
                     url: `${process.env.URL.trim()}/order/${object._id}`
                 })

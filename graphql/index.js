@@ -173,7 +173,6 @@ const resolvers = {
                 () => pubsub.asyncIterator(RELOAD_DATA),
                 (payload, variables, {user} ) => {
                     let subcategory = false
-                    console.log('Subscription')
                     if(payload.reloadData.subcategory&&user.specializations&&user.specializations.length) {
                         let subcategories = []
                         for (let i = 0; i < user.specializations.length; i++) {

@@ -97,7 +97,7 @@ const resolvers = {
                 return {
                     columns: [
                         'подкатегория',
-                        'специалистов(шт)'
+                        'исполнителей(шт)'
                     ],
                     row: findSubcategories
                 };
