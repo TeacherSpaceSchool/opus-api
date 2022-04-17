@@ -41,10 +41,13 @@ const resolvers = {
                     ...city?{city}:{},
                     $and: [
                         {specializations: {$not: {$size: 0}}},
-                        {specializations: {$exists: true}}
+                        {specializations: {$exists: true}},
+                        {specializations: {$elemMatch: {end: {$gt: new Date()}}}},
+                        ...dateStart?[
+                            {createdAt: {$gte: dateStart}},
+                            {createdAt: {$lt: dateEnd}}
+                        ]:[]
                     ],
-                    end: {$gt: new Date()},
-                    enable: true
                 })
                     .select('specializations')
                     .lean()

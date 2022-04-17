@@ -62,10 +62,10 @@ const resolvers = {
                 })
                 .lean()
             if(chat.part1._id.toString()===user._id.toString()&&chat.part1Unread) {
-                await Chat.update({_id}, {part1Unread: false})
+                await Chat.updateOne({_id}, {part1Unread: false})
             }
             else if(chat.part2._id.toString()===user._id.toString()&&chat.part2Unread) {
-                await Chat.update({_id}, {part2Unread: false})
+                await Chat.updateOne({_id}, {part2Unread: false})
             }
             return chat
         }

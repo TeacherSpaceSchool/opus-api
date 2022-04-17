@@ -83,8 +83,27 @@ const signupuserGQL = async ({name, password, login, code, isApple}, res, req) =
             });
             user = await User.create(user);
 
-            console.log(isApple)
-            await sendMessageByAdmin({text: 'Привет\nПривет', user: user._id, type: 'text'})
+            await sendMessageByAdmin({text: 'OPUS сервисине кош келипсиз!\n' +
+            'Бул жактан сиз турмуш- тиричиликке байланышкан баардык маселелерге натыйжалуу чечим таба аласыз.\n' +
+            'Бир мүнөттө биздин сервис тууралуу кабардар болуңуз!\n' +
+            'P.S: Промокод боюнча досторуңузду чакырып, бонустарга ээ болуңуз!  Кененирээк "Бонусы" бөлүмүндө.', user: user._id, type: 'text'})
+            await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: user._id, type: 'text'})
+            await sendMessageByAdmin({text: 'Добро пожаловать на сервис OPUS!\n' +
+            'Здесь вы найдете решение для всех бытовых задач.\n' +
+            'Узнайте через видео всё о нашем сервисе всего за 1 минуту!\n' +
+            'P.S: Приглашайте друзей по промокоду и получайте бонусы! Подробнее в разделе "Бонусы"', user: user._id, type: 'text'})
+            await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: user._id, type: 'text'})
+            if(isApple) {
+                await sendMessageByAdmin({text: 'Сиздин ыңгайлуулугуңуз үчүн, башкы экраныңызга OPUS веб-версиясынын белгисин жайгаштырып алсаңыз болот.\n' +
+                'Ал үчүн: opus.kg сайтына кирип, "Поделиться", "Экран Домой"  жана "Добавить" баскычтарын басуу керек.', user: user._id, type: 'text'})
+                await sendMessageByAdmin({text: 'Сообщение для владельцев iOS (iPhone)!\n' +
+                'Для вашего удобства, вы можете установить ярлык веб-версии OPUS на ваш главный экран.\n' +
+                'Для этого вам необходимо:\n' +
+                '1) Зайти на сайт opus.kg;\n' +
+                '2) Нажать на кнопку "Поделиться"\n' +
+                '3) Нажать на "Экран домой";\n' +
+                '4) Нажать "Добавить".', user: user._id, type: 'text'})
+            }
 
             if (code) {
                 code = await Bonus.findOne({code}).select('user').lean()
