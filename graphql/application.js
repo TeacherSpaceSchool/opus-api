@@ -168,7 +168,7 @@ const resolversMutation = {
                     await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
                     await sendMessageByAdmin({text: _user.name + ', Отличное решение!\n' +
                     'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
-                    'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text'})
+                    'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text', push: true})
                     await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
                     await _user.save()
                 }
@@ -229,7 +229,7 @@ const resolversMutation = {
                         await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
                         await sendMessageByAdmin({text: _user.name + ', Отличное решение!\n' +
                         'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
-                        'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text'})
+                        'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text', push: true})
                         await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
                         await _user.save()
                     }

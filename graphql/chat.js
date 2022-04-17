@@ -184,7 +184,7 @@ const resolversMutation = {
                     message: object
                 }
             });
-            sendWebPush({
+            await sendWebPush({
                 tag: chat._id,
                 icon: object.who.avatar,
                 title: object.who.name,

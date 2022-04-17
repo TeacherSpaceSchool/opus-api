@@ -91,7 +91,7 @@ const signupuserGQL = async ({name, password, login, code, isApple}, res, req) =
             await sendMessageByAdmin({text: 'Добро пожаловать на сервис OPUS!\n' +
             'Здесь вы найдете решение для всех бытовых задач.\n' +
             'Узнайте через видео всё о нашем сервисе всего за 1 минуту!\n' +
-            'P.S: Приглашайте друзей по промокоду и получайте бонусы! Подробнее в разделе "Бонусы"', user: user._id, type: 'text'})
+            'P.S: Приглашайте друзей по промокоду и получайте бонусы! Подробнее в разделе "Бонусы"', user: user._id, type: 'text', push: true})
             await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: user._id, type: 'text'})
             if(isApple) {
                 await sendMessageByAdmin({text: 'Сиздин ыңгайлуулугуңуз үчүн, башкы экраныңызга OPUS веб-версиясынын белгисин жайгаштырып алсаңыз болот.\n' +

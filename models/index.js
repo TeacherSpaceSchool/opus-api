@@ -7,7 +7,7 @@ let connect = function() {
                 /*reconnectTries: Number.MAX_VALUE,
                 reconnectInterval: 1000,*/
                 connectTimeoutMS: 30000,
-                useUnifiedTopology: true,
+                //useUnifiedTopology: true,
                 //allowDiskUse: true
             },
         function (err) {
