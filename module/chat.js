@@ -4,7 +4,7 @@ const User = require('../models/user');
 const { sendWebPush } = require('./webPush');
 const adminLogin = require('./const').adminLogin
 
-const sendMessageByAdmin = async({user, text, type, push}) => {
+const sendMessageByAdmin = async({user, text, type, tag}) => {
 
    let admin = (await User.findOne({login: adminLogin}).lean())._id
     let chat = await Chat.findOne({part1: admin, part2: user})
@@ -61,10 +61,10 @@ const sendMessageByAdmin = async({user, text, type, push}) => {
         }
     });
 
-    if(push) {
+    if(tag) {
         setTimeout(async () => {
             await sendWebPush({
-                tag: chat._id,
+                tag,
                 icon: object.who.avatar,
                 title: object.who.name,
                 message: object.text,
