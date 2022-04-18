@@ -86,12 +86,12 @@ const signupuserGQL = async ({name, password, login, code, isApple}, res, req) =
             await sendMessageByAdmin({text: 'OPUS сервисине кош келипсиз!\n' +
             'Бул жактан сиз турмуш- тиричиликке байланышкан баардык маселелерге натыйжалуу чечим таба аласыз.\n' +
             '1 мүнөттө биздин сервис тууралуу кабардар болуңуз!', user: user._id, type: 'text', tag: 'passport_kg'})
-            await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: user._id, type: 'text'})
+            await sendMessageByAdmin({text: 'https://youtu.be/Ca6k9AgQ7xU', user: user._id, type: 'link'})
             await sendMessageByAdmin({text: 'P.S: Промокод боюнча досторуңузду чакырып, бонустарга ээ болуңуз!  Кененирээк "Бонусы" бөлүмүндө.', user: user._id, type: 'text'})
             await sendMessageByAdmin({text: 'Добро пожаловать на сервис OPUS!\n' +
             'Здесь вы найдете решение для всех бытовых задач.\n' +
             'Узнайте всё о нашем сервисе всего за 1 минуту!', user: user._id, type: 'text', tag: 'passport_ru'})
-            await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: user._id, type: 'text'})
+            await sendMessageByAdmin({text: 'https://youtu.be/Pg6LH3PnFU0', user: user._id, type: 'link'})
             await sendMessageByAdmin({text: 'P.S: Приглашайте друзей по промокоду и получайте бонусы! Подробнее в разделе "Бонусы"', user: user._id, type: 'text'})
             if(isApple) {
                 await sendMessageByAdmin({text: 'iOS (iPhone) ээлери үчүн маалымат.\n' +

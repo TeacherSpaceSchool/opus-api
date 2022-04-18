@@ -165,11 +165,11 @@ const resolversMutation = {
                     await sendMessageByAdmin({text: _user.name + ' Эң мыкты чечим! \n' +
                     'Эми сиз билдирмелерге жооп берип,  OPUS менен бирге акча табыңыз.\n' +
                     '"Аткаруучулардын" мүмкүнчүлүктөрү жөнүндө маалымат алуу үчүн, кыска роликти көрүңүз:', user: _user._id, type: 'text', tag: 'application_kg'})
-                    await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
+                    await sendMessageByAdmin({text: 'https://youtu.be/EqiLgo3ogd0', user: _user._id, type: 'link'})
                     await sendMessageByAdmin({text: _user.name + ', Отличное решение!\n' +
                     'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
                     'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text', tag: 'application_ru'})
-                    await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
+                    await sendMessageByAdmin({text: 'https://youtu.be/TixFnyhg3Yg', user: _user._id, type: 'link'})
                     await _user.save()
                 }
             }
@@ -226,11 +226,11 @@ const resolversMutation = {
                         await sendMessageByAdmin({text: _user.name + ' Эң мыкты чечим! \n' +
                         'Эми сиз билдирмелерге жооп берип,  OPUS менен бирге акча табыңыз.\n' +
                         '"Аткаруучулардын" мүмкүнчүлүктөрү жөнүндө маалымат алуу үчүн, кыска роликти көрүңүз:', user: _user._id, type: 'text', tag: 'application_kg'})
-                        await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
+                        await sendMessageByAdmin({text: 'https://youtu.be/EqiLgo3ogd0', user: _user._id, type: 'link'})
                         await sendMessageByAdmin({text: _user.name + ', Отличное решение!\n' +
                         'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
                         'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text', tag: 'application_ru'})
-                        await sendMessageByAdmin({text: '[ВИДЕО] ссылка', user: _user._id, type: 'text'})
+                        await sendMessageByAdmin({text: 'https://youtu.be/TixFnyhg3Yg', user: _user._id, type: 'link'})
                         await _user.save()
                     }
 
