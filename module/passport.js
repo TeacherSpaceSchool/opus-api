@@ -113,7 +113,7 @@ const signupuserGQL = async ({name, password, login, code, isApple}, res, req) =
             if (code) {
                 code = await Bonus.findOne({code}).select('user').lean()
                 if (code)
-                    await addBonus({count: 10, what: 'Реферальная программа', user: code.user, invited: user._id})
+                    await addBonus({count: 15, what: 'Реферальная программа', user: code.user, invited: user._id})
             }
 
             code = randomstring.generate({length: 4, charset: 'alphanumeric'})
