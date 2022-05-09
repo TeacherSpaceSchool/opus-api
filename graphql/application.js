@@ -2,7 +2,7 @@ const Application = require('../models/application');
 const Subcategory = require('../models/subcategory');
 const Notification = require('../models/notification');
 const User = require('../models/user');
-const { saveImage, deleteFile, urlMain } = require('../module/const');
+const { saveImage, deleteFile, urlMain, saveFile } = require('../module/const');
 const { sendNotification } = require('../module/notification');
 const { sendMessageByAdmin } = require('../module/chat');
 
@@ -30,7 +30,9 @@ const query = `
 
 const mutation = `
     addApplication(uploads: [Upload], info: String!, category: ID!, subcategory: ID!): String
-    setApplication(_id: ID!, approve: Boolean, documents: [String], uploads: [Upload], comments: [String], info: String): String
+    addCommentForApplication(_id: ID!, file: Upload, comment: String!): String
+    deleteCommentForApplication(_id: ID!, idx: Int!): String
+    setApplication(_id: ID!, approve: Boolean, documents: [String], uploads: [Upload], info: String): String
     deleteApplication(_id: ID!): String
 `;
 
@@ -72,7 +74,7 @@ const resolvers = {
                 ...status?{status}:{},
                 ...'client'===user.role?{user: user._id}:{}
             })
-                .sort('-updatedAt')
+                .sort('-createdAt')
                 .skip(skip)
                 .limit(limit?limit:15)
                 .populate({
@@ -162,23 +164,82 @@ const resolversMutation = {
                         }
                     ]
                     _user.specializations = [..._user.specializations]
-                    await sendMessageByAdmin({text: _user.name + ' Эң мыкты чечим! \n' +
-                    'Эми сиз билдирмелерге жооп берип,  OPUS менен бирге акча табыңыз.\n' +
-                    '"Аткаруучулардын" мүмкүнчүлүктөрү жөнүндө маалымат алуу үчүн, кыска роликти көрүңүз:', user: _user._id, type: 'text', tag: 'application_kg'})
-                    await sendMessageByAdmin({text: 'https://youtu.be/EqiLgo3ogd0', user: _user._id, type: 'link'})
-                    await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
-                    await sendMessageByAdmin({text: _user.name + ', Отличное решение!\n' +
-                    'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
-                    'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text', tag: 'application_ru'})
-                    await sendMessageByAdmin({text: 'https://youtu.be/TixFnyhg3Yg', user: _user._id, type: 'link'})
-                    await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
+                    if(_user.specializations.length===1) {
+                        await sendMessageByAdmin({
+                            text: _user.name + ' Эң мыкты чечим! \n' +
+                            'Эми сиз билдирмелерге жооп берип,  OPUS менен бирге акча табыңыз.\n' +
+                            '"Аткаруучулардын" мүмкүнчүлүктөрү жөнүндө маалымат алуу үчүн, кыска роликти көрүңүз:',
+                            user: _user._id,
+                            type: 'text',
+                            tag: 'application_kg'
+                        })
+                        await sendMessageByAdmin({text: 'https://youtu.be/EqiLgo3ogd0', user: _user._id, type: 'link'})
+                        await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
+                        await sendMessageByAdmin({
+                            text: _user.name + ', Отличное решение!\n' +
+                            'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
+                            'Узнайте о возможностях "Исполнителей" в коротком ролике:',
+                            user: _user._id,
+                            type: 'text',
+                            tag: 'application_ru'
+                        })
+                        await sendMessageByAdmin({text: 'https://youtu.be/TixFnyhg3Yg', user: _user._id, type: 'link'})
+                        await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
+                    }
                     await _user.save()
                 }
             }
             return 'OK'
         }
     },
-    setApplication: async(parent, {_id, approve, documents, uploads, comments, info}, {user}) => {
+    deleteCommentForApplication: async(parent, {_id, idx}, {user}) => {
+        if(['admin', 'manager'].includes(user.role)){
+            let object = await Application.findOne({
+                _id,
+                status: 'активный'
+            })
+            object.comments.splice(idx, 1)
+            object.comments = [...object.comments]
+            object.unread = true
+            await sendNotification({
+                title: 'Заявка на исполнителя',
+                type: 0,
+                whom: object.user,
+                message: 'Ваша заявка прокоментирована',
+                application: object._id,
+                url: `${process.env.URL.trim()}/application/${object._id}`
+            })
+            await object.save();
+            return 'OK'
+        }
+    },
+    addCommentForApplication: async(parent, {_id, file, comment}, {user}) => {
+        if(['admin', 'manager'].includes(user.role)){
+            let object = await Application.findOne({
+                _id,
+                status: 'активный'
+            })
+            if(file) {
+                let {stream, filename} = await file;
+                filename = await saveFile(stream, filename)
+                file = urlMain + filename
+                comment = `${file} | ${comment}`
+            }
+            object.comments = [comment, ...object.comments]
+            object.unread = true
+            await sendNotification({
+                title: 'Заявка на исполнителя',
+                type: 0,
+                whom: object.user,
+                message: 'Ваша заявка прокоментирована',
+                application: object._id,
+                url: `${process.env.URL.trim()}/application/${object._id}`
+            })
+            await object.save();
+            return comment
+        }
+    },
+    setApplication: async(parent, {_id, approve, documents, uploads, info}, {user}) => {
         if(['admin', 'manager', 'client'].includes(user.role)){
             let object = await Application.findOne({
                 _id,
@@ -187,18 +248,6 @@ const resolversMutation = {
             })
 
             if(['admin', 'manager'].includes(user.role)) {
-                if(comments) {
-                    object.unread = true
-                    object.comments = comments
-                    await sendNotification({
-                        title: 'Заявка на исполнителя',
-                        type: 0,
-                        whom: object.user,
-                        message: 'Ваша заявка прокоментирована',
-                        application: object._id,
-                        url: `${process.env.URL.trim()}/application/${object._id}`
-                    })
-                }
                 if(approve) {
                     object.unread = true
                     object.status = 'принят'
@@ -225,16 +274,36 @@ const resolversMutation = {
                             }
                         ]
                         _user.specializations = [..._user.specializations]
-                        await sendMessageByAdmin({text: _user.name + ' Эң мыкты чечим! \n' +
-                        'Эми сиз билдирмелерге жооп берип,  OPUS менен бирге акча табыңыз.\n' +
-                        '"Аткаруучулардын" мүмкүнчүлүктөрү жөнүндө маалымат алуу үчүн, кыска роликти көрүңүз:', user: _user._id, type: 'text', tag: 'application_kg'})
-                        await sendMessageByAdmin({text: 'https://youtu.be/EqiLgo3ogd0', user: _user._id, type: 'link'})
-                        await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
-                        await sendMessageByAdmin({text: _user.name + ', Отличное решение!\n' +
-                        'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
-                        'Узнайте о возможностях "Исполнителей" в коротком ролике:', user: _user._id, type: 'text', tag: 'application_ru'})
-                        await sendMessageByAdmin({text: 'https://youtu.be/TixFnyhg3Yg', user: _user._id, type: 'link'})
-                        await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
+                        if(_user.specializations.length===1) {
+                            await sendMessageByAdmin({
+                                text: _user.name + ' Эң мыкты чечим! \n' +
+                                'Эми сиз билдирмелерге жооп берип,  OPUS менен бирге акча табыңыз.\n' +
+                                '"Аткаруучулардын" мүмкүнчүлүктөрү жөнүндө маалымат алуу үчүн, кыска роликти көрүңүз:',
+                                user: _user._id,
+                                type: 'text',
+                                tag: 'application_kg'
+                            })
+                            await sendMessageByAdmin({
+                                text: 'https://youtu.be/EqiLgo3ogd0',
+                                user: _user._id,
+                                type: 'link'
+                            })
+                            await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
+                            await sendMessageByAdmin({
+                                text: _user.name + ', Отличное решение!\n' +
+                                'Теперь вы сможете откликаться на заявки и начать зарабатывать вместе с OPUS.\n' +
+                                'Узнайте о возможностях "Исполнителей" в коротком ролике:',
+                                user: _user._id,
+                                type: 'text',
+                                tag: 'application_ru'
+                            })
+                            await sendMessageByAdmin({
+                                text: 'https://youtu.be/TixFnyhg3Yg',
+                                user: _user._id,
+                                type: 'link'
+                            })
+                            await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
+                        }
                         await _user.save()
                     }
 
