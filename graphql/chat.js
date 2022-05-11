@@ -30,7 +30,7 @@ const type = `
 `;
 
 const query = `
-    chats(user: ID, skip: Int!): [Chat]
+    chats(user: ID, skip: Int!, limit: Int, search: String): [Chat]
     chat(_id: ID!): Chat
     messages(chat: ID!, skip: Int!): [Message]
 `;
@@ -70,18 +70,45 @@ const resolvers = {
             return chat
         }
     },
-    chats: async(parent, {user, skip}, ctx) => {
+    chats: async(parent, {user, skip, limit, search}, ctx) => {
         if(['admin', 'client'].includes(ctx.user.role)) {
-            if('client'===ctx.user.role) user = ctx.user._id
-            return await Chat.find({
-                $or: [
-                    {part1: user},
-                    {part2: user}
-                ]
-            })
+            if('client'===ctx.user.role||'admin'===ctx.user.role&&!user) user = ctx.user._id
+            let searchedUsers;
+            if(search)
+                searchedUsers = await User.find({
+                    name: {'$regex': search, '$options': 'i'},
+                })
+                    .distinct('_id')
+                    .lean()
+            return await Chat.find(
+                search?
+                    {
+                        $and: [
+                            {
+                                $or: [
+                                    {part1: user},
+                                    {part2: user}
+                                ]
+                            },
+                            {
+                                $or: [
+                                    {part1: {$in: searchedUsers}},
+                                    {part2: {$in: searchedUsers}},
+                                ]
+                            }
+                        ]
+                    }
+                    :
+                    {
+                        $or: [
+                            {part1: user},
+                            {part2: user},
+                        ]
+                    }
+                )
                 .sort('-updatedAt')
                 .skip(skip)
-                .limit(15)
+                .limit(limit?limit:15)
                 .populate({
                     path: 'part1',
                     select: '_id name avatar'
@@ -126,7 +153,7 @@ const resolvers = {
 
 const resolversMutation = {
     sendMessage: async(parent, {type, text, file, chat}, {user}) => {
-        if(user.role==='client'){
+        if(['admin', 'client'].includes(user.role)) {
             chat = await Chat.findOne({
                 $or: [
                     {part1: user._id},
@@ -197,7 +224,7 @@ const resolversMutation = {
         return null
     },
     readChat: async(parent, {chat}, {user}) => {
-        if(user.role==='client'){
+        if(['admin', 'client'].includes(user.role)) {
             chat = await Chat.findOne({
                 $or: [
                     {part1: user._id},
