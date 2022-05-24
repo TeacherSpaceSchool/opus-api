@@ -31,7 +31,7 @@ const type = `
 `;
 
 const query = `
-    chats(user: ID, skip: Int!, limit: Int, search: String, category: ID, subcategory: ID): [Chat]
+    chats(user: ID, skip: Int!, limit: Int, search: String): [Chat]
     chat(_id: ID!): Chat
     messages(chat: ID!, skip: Int!): [Message]
 `;
@@ -72,25 +72,13 @@ const resolvers = {
             return chat
         }
     },
-    chats: async(parent, {user, skip, limit, search, category, subcategory}, ctx) => {
+    chats: async(parent, {user, skip, limit, search}, ctx) => {
         if(['admin', 'client'].includes(ctx.user.role)) {
             if('client'===ctx.user.role||'admin'===ctx.user.role&&!user) user = ctx.user._id
-            let searchedUsers, categoryUsers, subcategoryUsers;
+            let searchedUsers;
             if(search)
                 searchedUsers = await User.find({
                     name: {'$regex': search, '$options': 'i'},
-                })
-                    .distinct('_id')
-                    .lean()
-            if(category)
-                categoryUsers = await User.find({
-                    specializations: {$elemMatch: {category}}
-                })
-                    .distinct('_id')
-                    .lean()
-            if(subcategory)
-                subcategoryUsers = await User.find({
-                    specializations: {$elemMatch: {subcategory}}
                 })
                     .distinct('_id')
                     .lean()
@@ -107,18 +95,6 @@ const resolvers = {
                             $or: [
                                 {part1: {$in: searchedUsers}},
                                 {part2: {$in: searchedUsers}},
-                            ]
-                        }]:[],
-                        ...category?[{
-                            $or: [
-                                {part1: {$in: categoryUsers}},
-                                {part2: {$in: categoryUsers}},
-                            ]
-                        }]:[],
-                        ...subcategory?[{
-                            $or: [
-                                {part1: {$in: subcategoryUsers}},
-                                {part2: {$in: subcategoryUsers}},
                             ]
                         }]:[]
                     ]
@@ -143,7 +119,6 @@ const resolvers = {
     },
     messages: async(parent, {chat, skip}, {user}) => {
         if(['admin', 'client'].includes(user.role)) {
-            console.log()
             return await Message.find({
                 $or: [
                     {
