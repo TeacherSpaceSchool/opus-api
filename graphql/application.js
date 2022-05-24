@@ -19,17 +19,18 @@ const type = `
     category: Category
     subcategory: Subcategory
     approvedUser: User
+    verification: Boolean
   }
 `;
 
 const query = `
-    applications(status: String, search: String, skip: Int!, limit: Int): [Application]
-    applicationsCount(search: String): [Int]
+    applications(status: String, search: String, skip: Int!, limit: Int, verification: Boolean): [Application]
+    applicationsCount(search: String, verification: Boolean): [Int]
     application(_id: ID!): Application
 `;
 
 const mutation = `
-    addApplication(uploads: [Upload], info: String!, category: ID!, subcategory: ID!): String
+    addApplication(uploads: [Upload], verification: Boolean!, info: String!, category: ID!, subcategory: ID!): String
     addCommentForApplication(_id: ID!, file: Upload, comment: String!): String
     deleteCommentForApplication(_id: ID!, idx: Int!): String
     setApplication(_id: ID!, approve: Boolean, documents: [String], uploads: [Upload], info: String): String
@@ -37,7 +38,7 @@ const mutation = `
 `;
 
 const resolvers = {
-    applicationsCount: async(parent, {search}, {user}) => {
+    applicationsCount: async(parent, {search,verification}, {user}) => {
         if(['manager', 'admin'].includes(user.role)) {
             let searchedUsers;
             if(search)
@@ -48,19 +49,27 @@ const resolvers = {
                     .lean()
             return [
                 await Application.countDocuments({
-                    ...search?{user: {$in: searchedUsers}}:{},
+                    ...['manager', 'admin'].includes(user.role)?{verification}:{},
+                    verification,
                     status: 'активный'
                 })
                     .lean(),
                 await Application.countDocuments({
-                    ...search?{user: {$in: searchedUsers}}:{},
+                    ...['manager', 'admin'].includes(user.role)?{verification}:{},
+                    verification,
                     status: 'принят'
+                })
+                    .lean(),
+                await Application.countDocuments({
+                    ...['manager', 'admin'].includes(user.role)?{verification}:{},
+                    status: 'активный',
+                    ...verification?{verification: null}:{verification: true}
                 })
                     .lean(),
             ]
         }
     },
-    applications: async(parent, {search, status, skip, limit}, {user}) => {
+    applications: async(parent, {search, status, skip, limit, verification}, {user}) => {
         if(['manager', 'admin', 'client'].includes(user.role)) {
             let searchedUsers
             if(search)
@@ -70,6 +79,7 @@ const resolvers = {
                     .distinct('_id')
                     .lean()
             return await Application.find({
+                ...['manager', 'admin'].includes(user.role)?{verification}:{},
                 ...search?{user: {$in: searchedUsers}}:{},
                 ...status?{status}:{},
                 ...'client'===user.role?{user: user._id}:{}
@@ -128,7 +138,7 @@ const resolvers = {
 };
 
 const resolversMutation = {
-    addApplication: async(parent, {uploads, info, category, subcategory}, {user}) => {
+    addApplication: async(parent, {verification, uploads, info, category, subcategory}, {user}) => {
         if(user.role==='client'){
             let documents = []
             for(let i = 0; i<uploads.length;i++) {
@@ -147,7 +157,8 @@ const resolversMutation = {
                 unread: false,
                 user: user._id,
                 category,
-                subcategory: subcategory._id
+                subcategory: subcategory._id,
+                verification
             });
             await Application.create(object)
             if(subcategory.autoApplication) {
@@ -202,7 +213,7 @@ const resolversMutation = {
             object.comments = [...object.comments]
             object.unread = true
             await sendNotification({
-                title: 'Заявка на исполнителя',
+                title: object.verification?'Заявка на подтвержденние исполнителя':'Заявка на исполнителя',
                 type: 0,
                 whom: object.user,
                 message: 'Ваша заявка прокоментирована',
@@ -228,7 +239,7 @@ const resolversMutation = {
             object.comments = [comment, ...object.comments]
             object.unread = true
             await sendNotification({
-                title: 'Заявка на исполнителя',
+                title: object.verification?'Заявка на подтвержденние исполнителя':'Заявка на исполнителя',
                 type: 0,
                 whom: object.user,
                 message: 'Ваша заявка прокоментирована',
@@ -253,7 +264,7 @@ const resolversMutation = {
                     object.status = 'принят'
                     object.approvedUser = user._id
                     await sendNotification({
-                        title: 'Заявка на исполнителя',
+                        title: object.verification?'Заявка на подтвержденние исполнителя':'Заявка на исполнителя',
                         type: 0,
                         whom: object.user,
                         message: 'Ваша заявка принята',
@@ -304,9 +315,10 @@ const resolversMutation = {
                             })
                             await sendMessageByAdmin({text: '*****', user: user._id, type: 'text'})
                         }
-                        await _user.save()
                     }
-
+                    if(object.verification&&!_user.verification)
+                        _user.verification = true
+                    await _user.save()
                 }
             }
 

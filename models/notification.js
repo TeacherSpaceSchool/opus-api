@@ -32,6 +32,6 @@ const NotificationSchema = mongoose.Schema({
 NotificationSchema.index({whom: 1})
 NotificationSchema.index({order: 1})
 
-const Specialization = mongoose.model('NotificationOpus', NotificationSchema);
+const Notification = mongoose.model('NotificationOpus', NotificationSchema);
 
-module.exports = Specialization;
+module.exports = Notification;

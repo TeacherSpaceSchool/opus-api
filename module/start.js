@@ -1,6 +1,7 @@
 const { Worker, isMainThread } = require('worker_threads');
 const { createAdmin, reductionToUser } = require('../module/user');
 const { reductionToOrder } = require('../module/order');
+const { reductionToChat } = require('../module/chat');
 const { reductionToNotification } = require('../module/notification');
 
 let startDeleteBD = async () => {
@@ -24,6 +25,7 @@ let start = async () => {
     await reductionToNotification()*/
     await reductionToOrder()
     await startDeleteBD();
+    //await reductionToChat()
 }
 
 module.exports.start = start;

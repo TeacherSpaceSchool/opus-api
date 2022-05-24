@@ -30,6 +30,7 @@ const type = `
     cancelExecutor: String
     cancelCustomer: String
     confirm: Boolean
+    verificationExecutor: Boolean
     responsedUsers: [String]
     chat: Chat
   }
@@ -43,13 +44,13 @@ const query = `
 `;
 
 const mutation = `
-    addOrder(category: ID, subcategory: ID, executor: ID, name: String!, address: String, apartment: String, info: String!, geo: [Float]!, dateStart: Date, dateEnd: Date, price: String, urgency: Boolean, uploads: [Upload]): String
+    addOrder(category: ID, subcategory: ID, verificationExecutor: Boolean, executor: ID, name: String!, address: String, apartment: String, info: String!, geo: [Float]!, dateStart: Date, dateEnd: Date, price: String, urgency: Boolean, uploads: [Upload]): String
     responseOrder(_id: ID!, message: String): String
     approveExecutor(_id: ID!, executor: ID): String
     confirmOrder(_id: ID!): String
     cancelOrder(_id: ID!, message: String): String
     cloneOrder(_id: ID!): String
-    setOrder(_id: ID!, name: String, address: String, apartment: String, info: String, geo: [Float], dateStart: Date, dateEnd: Date, price: String, images: [String], uploads: [Upload], urgency: Boolean): String
+    setOrder(_id: ID!, name: String, address: String, apartment: String, info: String, geo: [Float], dateStart: Date, dateEnd: Date, price: String, images: [String], uploads: [Upload], verificationExecutor: Boolean, urgency: Boolean): String
     deleteOrder(_id: ID!): String
 `;
 
@@ -200,6 +201,7 @@ const resolversMutation = {
                     price: object.price,
                     urgency: object.urgency,
                     address: object.address,
+                    verificationExecutor: object.verificationExecutor,
                     apartment: object.apartment,
                     images: object.images,
                     status: 'активный',
@@ -221,7 +223,7 @@ const resolversMutation = {
             return 'ERROR'
         }
     },
-    addOrder: async(parent, {category, subcategory, name, info, geo, dateStart, dateEnd, price, urgency, uploads, address, apartment, executor}, {user}) => {
+    addOrder: async(parent, {category, verificationExecutor, subcategory, name, info, geo, dateStart, dateEnd, price, urgency, uploads, address, apartment, executor}, {user}) => {
         if(user.role==='client'){
             let images = []
             for(let i = 0; i<uploads.length;i++) {
@@ -241,6 +243,7 @@ const resolversMutation = {
                     city: user.city,
                     dateEnd,
                     price,
+                    verificationExecutor,
                     urgency,
                     address,
                     apartment,
@@ -277,7 +280,7 @@ const resolversMutation = {
             return 'ERROR'
         }
     },
-    setOrder: async(parent, {_id, name, info, geo, dateStart, dateEnd, price, uploads, images, address, apartment, urgency}, {user}) => {
+    setOrder: async(parent, {_id, name, info, geo, dateStart, dateEnd, price, uploads, images, address, apartment, urgency, verificationExecutor}, {user}) => {
         if(['admin', 'client'].includes(user.role)) {
             let object = await Order.findOne({
                 _id,
@@ -293,6 +296,7 @@ const resolversMutation = {
                 if(address) object.address = address
                 if(apartment) object.apartment = apartment
                 if(urgency!=undefined) object.urgency = urgency
+                if(verificationExecutor!=undefined) object.verificationExecutor = verificationExecutor
                 if (images)
                     for (let i = 0; i < object.images.length; i++)
                         if (!images.includes(object.images[i])) {

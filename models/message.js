@@ -16,6 +16,10 @@ const MessageSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ChatOpus'
     },
+    mailing: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ChatOpus'
+    }]
 }, {
     timestamps: true
 });
@@ -23,6 +27,6 @@ const MessageSchema = mongoose.Schema({
 MessageSchema.index({chat: 1})
 MessageSchema.index({createdAt: 1})
 
-const Specialization = mongoose.model('MessageOpus', MessageSchema);
+const Message = mongoose.model('MessageOpus', MessageSchema);
 
-module.exports = Specialization;
+module.exports = Message;

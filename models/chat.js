@@ -23,6 +23,6 @@ ChatSchema.index({part1: 1})
 ChatSchema.index({part2: 1})
 ChatSchema.index({updatedAt: 1})
 
-const Specialization = mongoose.model('ChatOpus', ChatSchema);
+const Chat = mongoose.model('ChatOpus', ChatSchema);
 
-module.exports = Specialization;
+module.exports = Chat;

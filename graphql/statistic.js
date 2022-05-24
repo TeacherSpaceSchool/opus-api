@@ -15,25 +15,35 @@ const type = `
 `;
 
 const query = `
-    statistic(dateStart: Date, dateType: String, type: String, city: String): Statistic
+    statistic(dateStart: Date, dateEnd: Date, type: String, city: String): Statistic
 `;
 
 const resolvers = {
-    statistic: async(parent, {dateStart, dateType, type, city}, {user}) => {
+    statistic: async(parent, {dateStart, dateEnd, type, city}, {user}) => {
         if('admin'===user.role) {
-            let dateEnd
             if(dateStart){
                 dateStart= checkDate(dateStart)
                 dateStart.setHours(3, 0, 0, 0)
-                dateEnd = new Date(dateStart)
-                if(dateType==='year')
-                    dateEnd.setFullYear(dateEnd.getFullYear() + 1)
-                else if(dateType==='day')
+                if(dateEnd){
+                    dateEnd = new Date(dateEnd)
+                    dateEnd.setHours(3, 0, 0, 0)
+                }
+                else {
+                    dateEnd = new Date(dateStart)
                     dateEnd.setDate(dateEnd.getDate() + 1)
-                else if(dateType==='week')
-                    dateEnd.setDate(dateEnd.getDate() + 7)
-                else
-                    dateEnd.setMonth(dateEnd.getMonth() + 1)
+                }
+            }
+            else {
+                dateStart= new Date()
+                dateStart.setHours(3, 0, 0, 0)
+                if(dateEnd){
+                    dateEnd = new Date(dateEnd)
+                    dateEnd.setHours(3, 0, 0, 0)
+                }
+                else {
+                    dateEnd = new Date(dateStart)
+                    dateEnd.setDate(dateEnd.getDate() + 1)
+                }
             }
             if(type==='specialist'){
                 let _findSubcategories = {}

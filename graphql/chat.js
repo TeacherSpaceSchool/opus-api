@@ -26,17 +26,19 @@ const type = `
     text: String
     file: String
     chat: ID
+    mailing: [ID]
   }
 `;
 
 const query = `
-    chats(user: ID, skip: Int!, limit: Int, search: String): [Chat]
+    chats(user: ID, skip: Int!, limit: Int, search: String, category: ID, subcategory: ID): [Chat]
     chat(_id: ID!): Chat
     messages(chat: ID!, skip: Int!): [Message]
 `;
 
 const mutation = `
     sendMessage(type: String!, text: String, file: Upload, chat: ID!): Message
+    mailingMessage(type: String!, text: String, file: Upload, id: ID, typeMailing: String!): String
     readChat(chat: ID!): String
 `;
 
@@ -70,42 +72,57 @@ const resolvers = {
             return chat
         }
     },
-    chats: async(parent, {user, skip, limit, search}, ctx) => {
+    chats: async(parent, {user, skip, limit, search, category, subcategory}, ctx) => {
         if(['admin', 'client'].includes(ctx.user.role)) {
             if('client'===ctx.user.role||'admin'===ctx.user.role&&!user) user = ctx.user._id
-            let searchedUsers;
+            let searchedUsers, categoryUsers, subcategoryUsers;
             if(search)
                 searchedUsers = await User.find({
                     name: {'$regex': search, '$options': 'i'},
                 })
                     .distinct('_id')
                     .lean()
+            if(category)
+                categoryUsers = await User.find({
+                    specializations: {$elemMatch: {category}}
+                })
+                    .distinct('_id')
+                    .lean()
+            if(subcategory)
+                subcategoryUsers = await User.find({
+                    specializations: {$elemMatch: {subcategory}}
+                })
+                    .distinct('_id')
+                    .lean()
             return await Chat.find(
-                search?
-                    {
-                        $and: [
-                            {
-                                $or: [
-                                    {part1: user},
-                                    {part2: user}
-                                ]
-                            },
-                            {
-                                $or: [
-                                    {part1: {$in: searchedUsers}},
-                                    {part2: {$in: searchedUsers}},
-                                ]
-                            }
-                        ]
-                    }
-                    :
-                    {
-                        $or: [
-                            {part1: user},
-                            {part2: user},
-                        ]
-                    }
-                )
+                {
+                    $and: [
+                        {
+                            $or: [
+                                {part1: user},
+                                {part2: user}
+                            ]
+                        },
+                        ...search?[{
+                            $or: [
+                                {part1: {$in: searchedUsers}},
+                                {part2: {$in: searchedUsers}},
+                            ]
+                        }]:[],
+                        ...category?[{
+                            $or: [
+                                {part1: {$in: categoryUsers}},
+                                {part2: {$in: categoryUsers}},
+                            ]
+                        }]:[],
+                        ...subcategory?[{
+                            $or: [
+                                {part1: {$in: subcategoryUsers}},
+                                {part2: {$in: subcategoryUsers}},
+                            ]
+                        }]:[]
+                    ]
+                })
                 .sort('-updatedAt')
                 .skip(skip)
                 .limit(limit?limit:15)
@@ -126,14 +143,22 @@ const resolvers = {
     },
     messages: async(parent, {chat, skip}, {user}) => {
         if(['admin', 'client'].includes(user.role)) {
+            console.log()
             return await Message.find({
-                chat,
-                ...'client'===user.role?{
-                    $or: [
-                        {who: user},
-                        {whom: user}
-                    ]
-                }:{}
+                $or: [
+                    {
+                        chat,
+                        ...'client'===user.role?{
+                            $or: [
+                                {who: user},
+                                {whom: user}
+                            ]
+                        }:{}
+                    },
+                    {
+                        mailing: chat
+                    }
+                ]
             })
                 .sort('-createdAt')
                 .skip(skip)
@@ -152,6 +177,87 @@ const resolvers = {
 };
 
 const resolversMutation = {
+    mailingMessage: async(parent, {type, text, file, id, typeMailing}, {user}) => {
+        if('admin'===user.role) {
+            let chats, users
+            if(typeMailing==='Все') {
+                chats = await Chat.find({part1: user._id}).distinct('_id').lean()
+                users = await Chat.find({part1: user._id}).distinct('part2').lean()
+            }
+            else if(typeMailing==='Заказчики') {
+                users = await User.find({
+                    status: 'active',
+                    specializations: {$size: 0}
+                }).distinct('_id').lean()
+                chats = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('_id').lean()
+            }
+            else if(typeMailing==='Исполнители') {
+                users = await User.find({
+                    status: 'active',
+                    specializations: {$not: {$size: 0}}
+                }).distinct('_id').lean()
+                chats = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('_id').lean()
+            }
+            else if(typeMailing==='Категории') {
+                users = await User.find({
+                    status: 'active',
+                    specializations: {$elemMatch: {category: id}}
+                }).distinct('_id').lean()
+                chats = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('_id').lean()
+            }
+            else if(typeMailing==='Подкатегории') {
+                users = await User.find({
+                    status: 'active',
+                    specializations: {$elemMatch: {subcategory: id}}
+                }).distinct('_id').lean()
+                chats = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('_id').lean()
+            }
+
+            if (file) {
+                let {stream, filename} = await file;
+                filename = type==='image'?await saveImage(stream, filename):await saveFile(stream, filename)
+                file = urlMain + filename
+            }
+            let object = new Message({
+                who: user._id,
+                type,
+                text,
+                file,
+                mailing: chats
+            });
+            object = await Message.create(object)
+            object = await Message.findOne({
+                _id: object._id
+            })
+                .populate({
+                    path: 'who',
+                    select: '_id name avatar'
+                })
+                .lean()
+
+            await Chat.updateMany({_id: {$in: chats}}, {lastMessage: object._id, part2Unread: true})
+            console.log(await User.count({_id: {$in: users}}))
+            await User.updateMany({_id: {$in: users}}, {unreadBN: {notifications0: true}})
+
+            pubsub.publish(RELOAD_DATA, {
+                reloadData: {
+                    users,
+                    message: object,
+                    mailing: true
+                }
+            });
+            await sendWebPush({
+                tag: 'mailing',
+                icon: object.who.avatar,
+                title: object.who.name,
+                message: object.text,
+                url: `${process.env.URL.trim()}/notifications?page=0`,
+                users
+            })
+            return 'OK'
+        }
+        return 'ERROR'
+    },
     sendMessage: async(parent, {type, text, file, chat}, {user}) => {
         if(['admin', 'client'].includes(user.role)) {
             chat = await Chat.findOne({

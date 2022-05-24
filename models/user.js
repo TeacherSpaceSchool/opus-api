@@ -16,6 +16,7 @@ const userSchema = mongoose.Schema({
     notification: Boolean,
     lastActive: Date,
 
+    verification: Boolean,
     unreadBN: mongoose.Schema.Types.Mixed,
     name: String,
     city: String,

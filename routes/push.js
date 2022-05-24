@@ -4,6 +4,7 @@ const { sendWebPush } = require('../module/webPush');
 const User = require('../models/user');
 const ModelsError = require('../models/error');
 const PushNotification = require('../models/pushNotification');
+const mongoose = require('mongoose');
 
 router.get('/admin', async (req, res) => {
     try{
@@ -45,7 +46,7 @@ router.get('/all', async (req, res) => {
 
 router.post('/clicknotification', async (req, res) => {
     try{
-        if(req.body.notification) {
+        if(req.body.notification&&mongoose.Types.ObjectId.isValid(req.body.notification)) {
             let object = await PushNotification.findOne({_id: req.body.notification})
             if (object) {
                 object.click += 1

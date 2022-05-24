@@ -18,6 +18,6 @@ const BonusHistorySchema = mongoose.Schema({
 BonusHistorySchema.index({user: 1})
 BonusHistorySchema.index({createdAt: 1})
 
-const Specialization = mongoose.model('BonusHistoryOpus', BonusHistorySchema);
+const BonusHistory = mongoose.model('BonusHistoryOpus', BonusHistorySchema);
 
-module.exports = Specialization;
+module.exports = BonusHistory;

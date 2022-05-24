@@ -35,6 +35,7 @@ const typeDefs = gql`
         subcategory: String
         notification: Notification
         message: Message
+        mailing: Boolean
     }
   type Address {
     address: String

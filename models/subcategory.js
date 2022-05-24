@@ -23,6 +23,6 @@ SubcategorySchema.index({del: 1})
 SubcategorySchema.index({autoApplication: 1})
 SubcategorySchema.index({name: 1})
 
-const Specialization = mongoose.model('SubcategoryOpus', SubcategorySchema);
+const Subcategory = mongoose.model('SubcategoryOpus', SubcategorySchema);
 
-module.exports = Specialization;
+module.exports = Subcategory;

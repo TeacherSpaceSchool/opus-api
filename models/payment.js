@@ -20,6 +20,6 @@ PaymentSchema.index({status: 1})
 PaymentSchema.index({service: 1})
 PaymentSchema.index({paymentSystem: 1})
 
-const Specialization = mongoose.model('PaymentOpus', PaymentSchema);
+const Payment = mongoose.model('PaymentOpus', PaymentSchema);
 
-module.exports = Specialization;
+module.exports = Payment;

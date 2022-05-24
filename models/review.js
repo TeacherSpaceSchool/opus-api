@@ -19,6 +19,6 @@ const ReviewSchema = mongoose.Schema({
 ReviewSchema.index({whom: 1})
 ReviewSchema.index({who: 1})
 
-const Specialization = mongoose.model('ReviewOpus', ReviewSchema);
+const Review = mongoose.model('ReviewOpus', ReviewSchema);
 
-module.exports = Specialization;
+module.exports = Review;

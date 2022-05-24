@@ -18,6 +18,6 @@ BonusSchema.index({user: 1})
 BonusSchema.index({code: 1})
 BonusSchema.index({count: 1})
 
-const Specialization = mongoose.model('BonusOpus', BonusSchema);
+const Bonus = mongoose.model('BonusOpus', BonusSchema);
 
-module.exports = Specialization;
+module.exports = Bonus;

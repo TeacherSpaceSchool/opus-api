@@ -9,6 +9,10 @@ const urlMain = `${process.env.URL.trim()}:3000`,
     adminPass = 'cE59eDeaA82d'
 module.exports.emailMain = 'opus.kgz@gmail.com'
 module.exports.emailPass = 'gbjqshgcndcianjz'
+module.exports.loginSms = 'opus2022'
+module.exports.pwdSms = 'hSxvyEd7'
+module.exports.senderSms = 'OPUS.KG'
+module.exports.urlSms = 'https://smspro.nikita.kg/api/message'
 
 module.exports.weekDay = [
     'BC',

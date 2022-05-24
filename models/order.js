@@ -13,6 +13,7 @@ const OrderSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'UserOpus'
     },
+    verificationExecutor: Boolean,
     executor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'UserOpus'
@@ -51,6 +52,6 @@ OrderSchema.index({executor: 1})
 OrderSchema.index({createdAt: 1})
 OrderSchema.index({del: 1})
 
-const Specialization = mongoose.model('OrderOpus', OrderSchema);
+const Order = mongoose.model('OrderOpus', OrderSchema);
 
-module.exports = Specialization;
+module.exports = Order;

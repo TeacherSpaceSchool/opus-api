@@ -76,4 +76,8 @@ const sendMessageByAdmin = async({user, text, type, tag}) => {
 
 }
 
+module.exports.reductionToChat = async() => {
+    console.log('reductionToChat:', await Chat.deleteMany({$or: [{part1: null}, {part2: null}]}))
+}
+
 module.exports.sendMessageByAdmin = sendMessageByAdmin

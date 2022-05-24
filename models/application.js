@@ -10,6 +10,7 @@ const ApplicationSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SubcategoryOpus'
     },
+    verification: Boolean,
     documents: [String],
     comments: [String],
     info: String,
@@ -30,6 +31,6 @@ ApplicationSchema.index({user: 1})
 ApplicationSchema.index({status: 1})
 ApplicationSchema.index({createdAt: 1})
 
-const Specialization = mongoose.model('ApplicationOpus', ApplicationSchema);
+const Application = mongoose.model('ApplicationOpus', ApplicationSchema);
 
-module.exports = Specialization;
+module.exports = Application;
