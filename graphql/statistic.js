@@ -33,7 +33,7 @@ const resolvers = {
                     dateEnd.setDate(dateEnd.getDate() + 1)
                 }
             }
-            else {
+            else if(type!=='specialist') {
                 dateStart= new Date()
                 dateStart.setHours(3, 0, 0, 0)
                 if(dateEnd){
@@ -102,7 +102,8 @@ const resolvers = {
                     {
                         _id: 'All',
                         data: [
-                            findSubcategories.length,
+                            `Подкатегорий: ${findSubcategories.length}`,
+                            `Исполнителей: ${_findSpecialists.length}`
                         ]
                     },
                     ...findSubcategories
@@ -160,7 +161,7 @@ const resolvers = {
                     {
                         _id: 'All',
                         data: [
-                            _findOrder.length,
+                            `Заказов: ${_findOrder.length}`,
                         ]
                     },
                     ..._findOrder

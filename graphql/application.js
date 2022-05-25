@@ -49,21 +49,18 @@ const resolvers = {
                     .lean()
             return [
                 await Application.countDocuments({
-                    ...['manager', 'admin'].includes(user.role)?{verification}:{},
-                    verification,
+                    ...verification?{verification: true}:{verification: {$ne: true}},
                     status: 'активный'
                 })
                     .lean(),
                 await Application.countDocuments({
-                    ...['manager', 'admin'].includes(user.role)?{verification}:{},
-                    verification,
+                    ...verification?{verification: true}:{verification: {$ne: true}},
                     status: 'принят'
                 })
                     .lean(),
                 await Application.countDocuments({
-                    ...['manager', 'admin'].includes(user.role)?{verification}:{},
                     status: 'активный',
-                    ...verification?{verification: null}:{verification: true}
+                    ...verification?{verification: {$ne: true}}:{verification: true}
                 })
                     .lean(),
             ]
@@ -79,7 +76,7 @@ const resolvers = {
                     .distinct('_id')
                     .lean()
             return await Application.find({
-                ...['manager', 'admin'].includes(user.role)?{verification}:{},
+                ...['manager', 'admin'].includes(user.role)?verification?{verification: true}:{verification: {$ne: true}}:{},
                 ...search?{user: {$in: searchedUsers}}:{},
                 ...status?{status}:{},
                 ...'client'===user.role?{user: user._id}:{}
@@ -158,7 +155,7 @@ const resolversMutation = {
                 user: user._id,
                 category,
                 subcategory: subcategory._id,
-                verification
+                verification: verification?verification:null
             });
             await Application.create(object)
             if(subcategory.autoApplication) {
