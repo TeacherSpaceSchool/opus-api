@@ -20,7 +20,7 @@ const type = `
 
 const query = `
     subcategory(_id: ID!): Subcategory
-    subcategories(search: String, sort: String, skip: Int, category: ID): [Subcategory]
+    subcategories(search: String, sort: String, skip: Int, category: ID, compressed: Boolean): [Subcategory]
     subcategoriesBySpecialist(specialist: ID!): [Subcategory]
     subcategoriesCount(search: String, category: ID!): Int
     searchWordsSubcategories(category: ID): [String]
@@ -61,7 +61,7 @@ const resolvers = {
             })
             .lean()
     },
-    subcategories: async(parent, {search, skip, category, sort}, {user}) => {
+    subcategories: async(parent, {search, skip, category, sort, compressed}, {user}) => {
         return await Subcategory.find({
             ...search?{
                 $or: [
@@ -76,6 +76,7 @@ const resolvers = {
             .sort(sort?sort:'-priority')
             .skip(skip!=undefined ? skip : 0)
             .limit(skip!=undefined ? 15 : 1000000)
+            .select(compressed?'name image':'')
             .populate({
                 path: 'category',
                 select: '_id name'

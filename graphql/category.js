@@ -17,7 +17,7 @@ const type = `
 
 const query = `
     category(_id: ID!): Category
-    categories(search: String, skip: Int): [Category]
+    categories(search: String, skip: Int, compressed: Boolean): [Category]
     categoriesCount(search: String): Int
     searchWordsCategories: [String]
 `;
@@ -62,7 +62,7 @@ const resolvers = {
                 .lean()
         }
     },
-    categories: async(parent, {search, skip}, {user}) => {
+    categories: async(parent, {search, skip, compressed}, {user}) => {
         return await Category.find({
             ...'client'===user.role?{status: 'active'}:{},
             ...search?{
@@ -73,9 +73,10 @@ const resolvers = {
             }:{},
             del: {$ne: true}
         })
+            .sort('-priority')
             .skip(skip!=undefined ? skip : 0)
             .limit(skip!=undefined ? 15 : 1000000)
-            .sort('-priority')
+            .select(compressed?'name image':'')
             .lean()
     },
     category: async(parent, {_id}) => {

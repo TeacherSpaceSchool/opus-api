@@ -211,7 +211,6 @@ const resolversMutation = {
                 .lean()
 
             await Chat.updateMany({_id: {$in: chats}}, {lastMessage: object._id, part2Unread: true})
-            console.log(await User.count({_id: {$in: users}}))
             await User.updateMany({_id: {$in: users}}, {unreadBN: {notifications0: true}})
 
             pubsub.publish(RELOAD_DATA, {
