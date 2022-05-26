@@ -46,6 +46,7 @@ const resolvers = {
                 }
             }
             if(type==='specialist'){
+                let specializationsCount = 0
                 let _findSubcategories = {}
                 let _findSpecialists = await User.find({
                     ...city?{city}:{},
@@ -75,6 +76,7 @@ const resolvers = {
                 let subcategory = ''
                 for (let i = 0; i < _findSpecialists.length; i++) {
                     for (let i1 = 0; i1 < _findSpecialists[i].specializations.length; i1++) {
+                        specializationsCount += 1
                         if(_findSpecialists[i].specializations[i1].subcategory) {
                             subcategory = _findSpecialists[i].specializations[i1].subcategory
                             if (_findSubcategories[subcategory])
@@ -103,7 +105,8 @@ const resolvers = {
                         _id: 'All',
                         data: [
                             `Подкатегорий: ${findSubcategories.length}`,
-                            `Исполнителей: ${_findSpecialists.length}`
+                            `Исполнителей: ${_findSpecialists.length}`,
+                            `Специализаций: ${specializationsCount}`,
                         ]
                     },
                     ...findSubcategories
