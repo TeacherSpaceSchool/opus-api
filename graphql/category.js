@@ -75,7 +75,7 @@ const resolvers = {
         })
             .sort('-priority')
             .skip(skip!=undefined ? skip : 0)
-            .limit(skip!=undefined ? 15 : 1000000)
+            .limit(skip!=undefined ? 30 : 1000000)
             .select(compressed?'name image':'')
             .lean()
     },
