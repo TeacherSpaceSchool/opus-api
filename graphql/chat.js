@@ -51,7 +51,7 @@ const resolvers = {
             let countChat, countSms
             if(typeMailing==='Все') {
                 countSms = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     status: 'active',
                     city,
                 }).distinct('_id').lean()
@@ -59,7 +59,7 @@ const resolvers = {
             }
             else if(typeMailing==='Заказчики') {
                 countSms = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$size: 0}
@@ -68,7 +68,7 @@ const resolvers = {
             }
             else if(typeMailing==='Исполнители') {
                 countSms = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$not: {$size: 0}}
@@ -77,7 +77,7 @@ const resolvers = {
             }
             else if(typeMailing==='Категории') {
                 countSms = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$elemMatch: {category: id}}
@@ -86,7 +86,7 @@ const resolvers = {
             }
             else if(typeMailing==='Подкатегории') {
                 countSms = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$elemMatch: {subcategory: id}}
@@ -211,7 +211,7 @@ const resolversMutation = {
             let chats, users
             if(typeMailing==='Все') {
                 users = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     status: 'active',
                     city,
                 }).distinct('_id').lean()
@@ -220,7 +220,7 @@ const resolversMutation = {
             }
             else if(typeMailing==='Заказчики') {
                 users = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$size: 0}
@@ -229,7 +229,7 @@ const resolversMutation = {
             }
             else if(typeMailing==='Исполнители') {
                 users = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$not: {$size: 0}}
@@ -238,7 +238,7 @@ const resolversMutation = {
             }
             else if(typeMailing==='Категории') {
                 users = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$elemMatch: {category: id}}
@@ -247,7 +247,7 @@ const resolversMutation = {
             }
             else if(typeMailing==='Подкатегории') {
                 users = await User.find({
-                    role: {$in: 'client'},
+                    role: 'client',
                     city,
                     status: 'active',
                     specializations: {$elemMatch: {subcategory: id}}
