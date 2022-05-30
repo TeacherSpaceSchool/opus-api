@@ -76,7 +76,7 @@ const resolvers = {
             .sort('-priority')
             .skip(skip!=undefined ? skip : 0)
             .limit(skip!=undefined ? 30 : 1000000)
-            .select(compressed?'name image':'')
+            .select(compressed?'_id name image':'')
             .lean()
     },
     category: async(parent, {_id}) => {

@@ -62,7 +62,7 @@ const resolvers = {
             .lean()
     },
     subcategories: async(parent, {search, skip, category, sort, compressed}, {user}) => {
-        return await Subcategory.find({
+        const res = await Subcategory.find({
             ...search?{
                 $or: [
                     {name: {'$regex': search, '$options': 'i'}},
@@ -76,12 +76,13 @@ const resolvers = {
             .sort(sort?sort:'-priority')
             .skip(skip!=undefined ? skip : 0)
             .limit(skip!=undefined ? 30 : 1000000)
-            .select(compressed?'name image':'')
+            .select(compressed?'_id name image category':'')
             .populate({
                 path: 'category',
                 select: '_id name'
             })
             .lean()
+        return res
     },
     subcategoriesBySpecialist: async(parent, {specialist}) => {
         let res = []
@@ -101,6 +102,7 @@ const resolvers = {
                 del: {$ne: true}
             })
                 .sort('-priority')
+                .select('_id name image category')
                 .populate({
                     path: 'category',
                     select: '_id name'
