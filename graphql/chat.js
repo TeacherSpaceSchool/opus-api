@@ -2,6 +2,7 @@ const Chat = require('../models/chat');
 const Message = require('../models/message');
 const User = require('../models/user');
 const { saveImage, urlMain, saveFile } = require('../module/const');
+const { sendSmsMailing } = require('../module/sms');
 const { pubsub } = require('./index');
 const RELOAD_DATA = 'RELOAD_DATA';
 const { sendWebPush } = require('../module/webPush');
@@ -32,6 +33,7 @@ const type = `
 
 const query = `
     chats(user: ID, skip: Int!, limit: Int, search: String): [Chat]
+    mailingMessageCount(id: ID, typeMailing: String!): [Int]
     chat(_id: ID!): Chat
     messages(chat: ID!, skip: Int!): [Message]
 `;
@@ -43,6 +45,57 @@ const mutation = `
 `;
 
 const resolvers = {
+    mailingMessageCount: async(parent, {id, typeMailing}, {user, req}) => {
+        if('admin'===user.role) {
+            let city = req.cookies['city']?req.cookies['city']:'Бишкек'
+            let countChat, countSms
+            if(typeMailing==='Все') {
+                countSms = await User.find({
+                    role: {$in: 'client'},
+                    status: 'active',
+                    city,
+                }).distinct('_id').lean()
+                countChat = await Chat.countDocuments({part1: user._id, part2: {$in: countSms}}).lean()
+            }
+            else if(typeMailing==='Заказчики') {
+                countSms = await User.find({
+                    role: {$in: 'client'},
+                    city,
+                    status: 'active',
+                    specializations: {$size: 0}
+                }).distinct('_id').lean()
+                countChat = await Chat.countDocuments({part1: user._id, part2: {$in: countSms}}).lean()
+            }
+            else if(typeMailing==='Исполнители') {
+                countSms = await User.find({
+                    role: {$in: 'client'},
+                    city,
+                    status: 'active',
+                    specializations: {$not: {$size: 0}}
+                }).distinct('_id').lean()
+                countChat = await Chat.countDocuments({part1: user._id, part2: {$in: countSms}}).lean()
+            }
+            else if(typeMailing==='Категории') {
+                countSms = await User.find({
+                    role: {$in: 'client'},
+                    city,
+                    status: 'active',
+                    specializations: {$elemMatch: {category: id}}
+                }).distinct('_id').lean()
+                countChat = await Chat.countDocuments({part1: user._id, part2: {$in: countSms}}).lean()
+            }
+            else if(typeMailing==='Подкатегории') {
+                countSms = await User.find({
+                    role: {$in: 'client'},
+                    city,
+                    status: 'active',
+                    specializations: {$elemMatch: {subcategory: id}}
+                }).distinct('_id').lean()
+                countChat = await Chat.countDocuments({part1: user._id, part2: {$in: countSms}}).lean()
+            }
+            return [countChat, countSms.length]
+        }
+    },
     chat: async(parent, {_id}, {user}) => {
         if(['admin', 'client'].includes(user.role)) {
             let chat = await Chat.findOne({
@@ -152,15 +205,23 @@ const resolvers = {
 };
 
 const resolversMutation = {
-    mailingMessage: async(parent, {type, text, file, id, typeMailing}, {user}) => {
+    mailingMessage: async(parent, {type, text, file, id, typeMailing}, {req, user}) => {
         if('admin'===user.role) {
+            let city = req.cookies['city']?req.cookies['city']:'Бишкек'
             let chats, users
             if(typeMailing==='Все') {
-                chats = await Chat.find({part1: user._id}).distinct('_id').lean()
-                users = await Chat.find({part1: user._id}).distinct('part2').lean()
+                users = await User.find({
+                    role: {$in: 'client'},
+                    status: 'active',
+                    city,
+                }).distinct('_id').lean()
+                chats = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('_id').lean()
+                users = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('part2').lean()
             }
             else if(typeMailing==='Заказчики') {
                 users = await User.find({
+                    role: {$in: 'client'},
+                    city,
                     status: 'active',
                     specializations: {$size: 0}
                 }).distinct('_id').lean()
@@ -168,6 +229,8 @@ const resolversMutation = {
             }
             else if(typeMailing==='Исполнители') {
                 users = await User.find({
+                    role: {$in: 'client'},
+                    city,
                     status: 'active',
                     specializations: {$not: {$size: 0}}
                 }).distinct('_id').lean()
@@ -175,6 +238,8 @@ const resolversMutation = {
             }
             else if(typeMailing==='Категории') {
                 users = await User.find({
+                    role: {$in: 'client'},
+                    city,
                     status: 'active',
                     specializations: {$elemMatch: {category: id}}
                 }).distinct('_id').lean()
@@ -182,52 +247,60 @@ const resolversMutation = {
             }
             else if(typeMailing==='Подкатегории') {
                 users = await User.find({
+                    role: {$in: 'client'},
+                    city,
                     status: 'active',
                     specializations: {$elemMatch: {subcategory: id}}
                 }).distinct('_id').lean()
                 chats = await Chat.find({part1: user._id, part2: {$in: users}}).distinct('_id').lean()
             }
 
-            if (file) {
-                let {stream, filename} = await file;
-                filename = type==='image'?await saveImage(stream, filename):await saveFile(stream, filename)
-                file = urlMain + filename
+            if(type==='sms') {
+                let phones = await User.find({_id: {$in: users}}).distinct('login').lean()
+                await sendSmsMailing(phones, text)
             }
-            let object = new Message({
-                who: user._id,
-                type,
-                text,
-                file,
-                mailing: chats
-            });
-            object = await Message.create(object)
-            object = await Message.findOne({
-                _id: object._id
-            })
-                .populate({
-                    path: 'who',
-                    select: '_id name avatar'
-                })
-                .lean()
-
-            await Chat.updateMany({_id: {$in: chats}}, {lastMessage: object._id, part2Unread: true})
-            await User.updateMany({_id: {$in: users}}, {unreadBN: {notifications0: true}})
-
-            pubsub.publish(RELOAD_DATA, {
-                reloadData: {
-                    users,
-                    message: object,
-                    mailing: true
+            else {
+                if (file) {
+                    let {stream, filename} = await file;
+                    filename = type === 'image' ? await saveImage(stream, filename) : await saveFile(stream, filename)
+                    file = urlMain + filename
                 }
-            });
-            await sendWebPush({
-                tag: 'mailing',
-                icon: object.who.avatar,
-                title: object.who.name,
-                message: object.text,
-                url: `${process.env.URL.trim()}/notifications?page=0`,
-                users
-            })
+                let object = new Message({
+                    who: user._id,
+                    type,
+                    text,
+                    file,
+                    mailing: chats
+                });
+                object = await Message.create(object)
+                object = await Message.findOne({
+                    _id: object._id
+                })
+                    .populate({
+                        path: 'who',
+                        select: '_id name avatar'
+                    })
+                    .lean()
+
+                await Chat.updateMany({_id: {$in: chats}}, {lastMessage: object._id, part2Unread: true})
+                await User.updateMany({_id: {$in: users}}, {unreadBN: {notifications0: true}})
+
+                pubsub.publish(RELOAD_DATA, {
+                    reloadData: {
+                        users,
+                        message: object,
+                        mailing: true
+                    }
+                });
+                await sendWebPush({
+                    tag: 'mailing',
+                    icon: object.who.avatar,
+                    title: object.who.name,
+                    message: object.text,
+                    url: `${process.env.URL.trim()}/notifications?page=0`,
+                    users
+                })
+            }
             return 'OK'
         }
         return 'ERROR'
