@@ -2,7 +2,7 @@ const Order = require('../models/order');
 const Notification = require('../models/notification');
 const Chat = require('../models/chat');
 const User = require('../models/user');
-const { saveImage, deleteFile, urlMain, getGeoDistance } = require('../module/const');
+const { saveImage, deleteFile, urlMain, getGeoDistance, checkDate } = require('../module/const');
 const { sendNotification, sendNotificationBySubcategory } = require('../module/notification');
 
 const type = `
@@ -38,8 +38,8 @@ const type = `
 
 const query = `
     nearOrders(geo: [Float]!): [Order]
-    orders(skip: Int!, my: Boolean, user: ID, limit: Int, status: String, subcategory: ID): [Order]
-    ordersCount(user: ID): [Int]
+    orders(dateStart: Date, dateEnd: Date, skip: Int!, my: Boolean, user: ID, limit: Int, status: String, subcategory: ID, category: ID): [Order]
+    ordersCount(dateStart: Date, dateEnd: Date, user: ID, subcategory: ID, category: ID): [Int]
     order(_id: ID!): Order
 `;
 
@@ -55,13 +55,34 @@ const mutation = `
 `;
 
 const resolvers = {
-    ordersCount: async(parent, {user}, ctx) => {
+    ordersCount: async(parent, {dateStart, dateEnd, user, subcategory, category}, ctx) => {
         if(['admin', 'client'].includes(ctx.user.role)) {
             let city = ctx.req.cookies['city']?ctx.req.cookies['city']:'Бишкек'
             if('client'===ctx.user.role) user = ctx.user._id
+            if(dateStart&&'admin'===ctx.user.role){
+                dateStart= checkDate(dateStart)
+                dateStart.setHours(3, 0, 0, 0)
+                if(dateEnd){
+                    dateEnd = new Date(dateEnd)
+                    dateEnd.setHours(3, 0, 0, 0)
+                }
+                else {
+                    dateEnd = new Date(dateStart)
+                    dateEnd.setDate(dateEnd.getDate() + 1)
+                }
+            }
             let orders = await Order.find({
                 city,
-                ...'admin'===ctx.user.role&&!user?{}:{$or: [{customer: user}, {executor: user}]}
+                ...'admin'===ctx.user.role&&!user?
+                    {
+                        ...dateStart?{$and: [{createdAt: {$gte: dateStart}}, {createdAt: {$lt: dateEnd}}]}:{},
+                        ...subcategory?{subcategory}:{},
+                        ...category?{category}:{},
+                    }
+                    :
+                    {
+                        $or: [{customer: user}, {executor: user}]
+                    }
             }).select('status').lean()
             let res = {
                 'все': 0,
@@ -106,30 +127,54 @@ const resolvers = {
             return resOrders
         }
     },
-    orders: async(parent, {skip, my, user, limit, status, subcategory}, ctx) => {
+    orders: async(parent, {dateStart, dateEnd, skip, my, user, limit, status, subcategory, category}, ctx) => {
         let city = ctx.req.cookies['city']?ctx.req.cookies['city']:'Бишкек'
         let allowSubcategories = []
         if(ctx.user.role==='client')
             for (let i = 0; i < ctx.user.specializations.length; i++) {
-                if(/*ctx.user.specializations[i].end>new Date()&&*/ctx.user.specializations[i].enable)
+                if (/*ctx.user.specializations[i].end>new Date()&&*/ctx.user.specializations[i].enable)
                     allowSubcategories.push(ctx.user.specializations[i].subcategory)
             }
+        if(dateStart&&'admin'===ctx.user.role){
+            dateStart= checkDate(dateStart)
+            dateStart.setHours(3, 0, 0, 0)
+            if(dateEnd){
+                dateEnd = new Date(dateEnd)
+                dateEnd.setHours(3, 0, 0, 0)
+            }
+            else {
+                dateEnd = new Date(dateStart)
+                dateEnd.setDate(dateEnd.getDate() + 1)
+            }
+        }
         return await Order.find({
             city,
             ...status?{status}:{},
-            ...ctx.user.role==='admin'&&user?{$or: [{customer: user}, {executor: user}]}:{},
-            ...ctx.user.role==='client'||!ctx.user.role||subcategory?
+            ...ctx.user.role==='admin'?
+                user?
+                    {
+                        $or: [{customer: user}, {executor: user}]
+                    }
+                    :
+                    {
+                        ...dateStart?{$and: [{createdAt: {$gte: dateStart}}, {createdAt: {$lt: dateEnd}}]}:{},
+                        ...category?{category}:{},
+                        ...subcategory?{subcategory}:{}
+                    }
+                :
                 {
                     $and: [
                         ...subcategory?[{subcategory}]:[],
                         my&&ctx.user.role==='client'?
                             {$or: [{customer: ctx.user._id}, {executor: ctx.user._id}]}
                             :
-                            {...ctx.user.specializations&&ctx.user.specializations.length?{subcategory: {$in: allowSubcategories}}:{}, customer: {$ne: ctx.user._id}, executor: null}
+                            {
+                                ...ctx.user.specializations&&ctx.user.specializations.length?{subcategory: {$in: allowSubcategories}}:{},
+                                customer: {$ne: ctx.user._id},
+                                executor: null
+                            }
                     ]
                 }
-                :
-                {}
         })
             .sort(ctx.user.role==='client'&&my||ctx.user.role==='admin'&&user?'-updatedAt':'-createdAt')
             .skip(skip)
