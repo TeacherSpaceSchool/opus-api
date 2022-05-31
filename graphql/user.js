@@ -1,7 +1,7 @@
 const User = require('../models/user');
 const jwtsecret = 'HZRD8YZtT14pbGZGlZSH';
 const jwt = require('jsonwebtoken');
-const { saveImage, deleteFile, urlMain } = require('../module/const');
+const { saveImage, deleteFile, urlMain, checkDate } = require('../module/const');
 const { SingletonRedis } = require('../module/redis')
 
 const type = `
@@ -62,8 +62,8 @@ const type = `
 `;
 
 const query = `
-    users(favorite: Boolean, employment: Boolean, search: String, category: ID, subcategory: ID, skip: Int!, status: String, limit: Int): [User]
-    usersCount(favorite: Boolean, employment: Boolean, search: String, category: ID, subcategory: ID, status: String): Int
+    users(dateStart: Date, dateEnd: Date, favorite: Boolean, employment: Boolean, search: String, category: ID, subcategory: ID, skip: Int!, status: String, limit: Int): [User]
+    usersCount(dateStart: Date, dateEnd: Date, favorite: Boolean, employment: Boolean, search: String, category: ID, subcategory: ID, status: String): Int
     user(_id: ID!): User
 `;
 
@@ -77,16 +77,29 @@ const mutation = `
 `;
 
 const resolvers = {
-    users: async(parent, {favorite, employment, search, category, subcategory, skip, status, limit}, {user, req}) => {
+    users: async(parent, {dateEnd, dateStart, favorite, employment, search, category, subcategory, skip, status, limit}, {user, req}) => {
+        if(dateStart&&'admin'===user.role){
+            dateStart= checkDate(dateStart)
+            dateStart.setHours(3, 0, 0, 0)
+            if(dateEnd){
+                dateEnd = new Date(dateEnd)
+                dateEnd.setHours(3, 0, 0, 0)
+            }
+            else {
+                dateEnd = new Date(dateStart)
+                dateEnd.setDate(dateEnd.getDate() + 1)
+            }
+        }
         let now = new Date()
         let city = req.cookies['city']?req.cookies['city']:'Бишкек'
          let res =  await User.find({
-            ...user.role!=='admin' ? {status: 'active'} : status ? {status} : {},
-            ...favorite ? {
-                favorites: user._id.toString()
-            } : {},
-            ...search ? {name: {'$regex': search, '$options': 'i'}} : {},
-            ...category ? {specializations: {$elemMatch: {category}}} : {},
+             ...dateStart?{$and: [{createdAt: {$gte: dateStart}}, {createdAt: {$lt: dateEnd}}]}:{},
+             ...user.role!=='admin' ? {status: 'active'} : status ? {status} : {},
+             ...favorite ? {
+                 favorites: user._id.toString()
+             } : {},
+             ...search ? {name: {'$regex': search, '$options': 'i'}} : {},
+             ...category ? {specializations: {$elemMatch: {category}}} : {},
              ...subcategory?{specializations: {$elemMatch: {$and: [
                  {subcategory},
                  ...user.role==='client'?[
@@ -110,10 +123,23 @@ const resolvers = {
         }
         return res
     },
-    usersCount: async(parent, {favorite, employment, search, category, subcategory, status}, {user, req}) => {
+    usersCount: async(parent, {dateEnd, dateStart, favorite, employment, search, category, subcategory, status}, {user, req}) => {
         let now = new Date()
         let city = req.cookies['city']?req.cookies['city']:'Бишкек'
+        if(dateStart&&'admin'===user.role){
+            dateStart= checkDate(dateStart)
+            dateStart.setHours(3, 0, 0, 0)
+            if(dateEnd){
+                dateEnd = new Date(dateEnd)
+                dateEnd.setHours(3, 0, 0, 0)
+            }
+            else {
+                dateEnd = new Date(dateStart)
+                dateEnd.setDate(dateEnd.getDate() + 1)
+            }
+        }
         return await User.countDocuments({
+            ...dateStart?{$and: [{createdAt: {$gte: dateStart}}, {createdAt: {$lt: dateEnd}}]}:{},
             ...user.role!=='admin' ? {status: 'active'} : status ? {status} : {},
             ...favorite?{favorites: user._id.toString()}:{},
             ...search?{name: {'$regex': search, '$options': 'i'}}:{},
