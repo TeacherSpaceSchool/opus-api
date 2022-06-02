@@ -14,6 +14,7 @@ const ApplicationSchema = mongoose.Schema({
     documents: [String],
     comments: [String],
     info: String,
+    city: String,
     unread: Boolean,
     user: {
         type: mongoose.Schema.Types.ObjectId,

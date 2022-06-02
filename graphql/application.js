@@ -38,8 +38,9 @@ const mutation = `
 `;
 
 const resolvers = {
-    applicationsCount: async(parent, {search,verification}, {user}) => {
+    applicationsCount: async(parent, {search,verification}, {user, req}) => {
         if(['manager', 'admin'].includes(user.role)) {
+            let city = req.cookies['city']?req.cookies['city']:'Бишкек'
             let searchedUsers;
             if(search)
                 searchedUsers = await User.find({
@@ -49,16 +50,30 @@ const resolvers = {
                     .lean()
             return [
                 await Application.countDocuments({
+                    ...search?{user: {$in: searchedUsers}}:{},
+                    ...['manager', 'admin'].includes(user.role)?{
+                        ...search?{user: {$in: searchedUsers}}:{},
+                        city
+                    }:{},
                     ...verification?{verification: true}:{verification: {$ne: true}},
                     status: 'активный'
                 })
                     .lean(),
                 await Application.countDocuments({
+                    ...search?{user: {$in: searchedUsers}}:{},
+                    ...['manager', 'admin'].includes(user.role)?{
+                        ...search?{user: {$in: searchedUsers}}:{},
+                        city
+                    }:{},
                     ...verification?{verification: true}:{verification: {$ne: true}},
                     status: 'принят'
                 })
                     .lean(),
                 await Application.countDocuments({
+                    ...['manager', 'admin'].includes(user.role)?{
+                        ...search?{user: {$in: searchedUsers}}:{},
+                        city
+                    }:{},
                     status: 'активный',
                     ...verification?{verification: {$ne: true}}:{verification: true}
                 })
@@ -66,8 +81,9 @@ const resolvers = {
             ]
         }
     },
-    applications: async(parent, {search, status, skip, limit, verification}, {user}) => {
+    applications: async(parent, {search, status, skip, limit, verification}, {user, req}) => {
         if(['manager', 'admin', 'client'].includes(user.role)) {
+            let city = req.cookies['city']?req.cookies['city']:'Бишкек'
             let searchedUsers
             if(search)
                 searchedUsers = await User.find({
@@ -77,6 +93,7 @@ const resolvers = {
                     .lean()
             return await Application.find({
                 ...['manager', 'admin'].includes(user.role)?verification?{verification: true}:{verification: {$ne: true}}:{},
+                ...['manager', 'admin'].includes(user.role)?{city}:{},
                 ...search?{user: {$in: searchedUsers}}:{},
                 ...status?{status}:{},
                 ...'client'===user.role?{user: user._id}:{}
@@ -126,7 +143,7 @@ const resolvers = {
                     path: 'approvedUser',
                     select: '_id name role'
                 })
-            if('client'===user.role&&application.unread){
+            if('client'===user.role&&application&&application.unread){
                 await Application.updateOne({_id, user: user._id}, {unread: false})
             }
             return application
@@ -155,7 +172,8 @@ const resolversMutation = {
                 user: user._id,
                 category,
                 subcategory: subcategory._id,
-                verification: verification?verification:null
+                verification: verification?verification:null,
+                city: user.city
             });
             await Application.create(object)
             if(subcategory.autoApplication) {

@@ -45,7 +45,7 @@ const verifydeuserGQL = async (req, res) => {
     return new Promise((resolve) => { passport.authenticate('jwt', async function (err, user) {
         try{
             if(user) {
-                if(req.cookies&&!req.cookies['city']) {
+                if(req.cookies&&(!req.cookies['city']||user.role!=='admin'&&req.cookies['city']!==user.city)) {
                     req.cookies['city'] = user.city
                     await res.cookie('city', user.city, {maxAge: 10000*24*60*60*1000 })
                 }
